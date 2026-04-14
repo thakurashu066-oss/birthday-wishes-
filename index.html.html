@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday</title>
+    
+    <!-- Google Fonts for 2026-Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* ==========================================
+           CORE DESIGN SYSTEM & VARIABLES
+           ========================================== */
+        :root {
+            --bg-color: #050507;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --accent-1: #ff2a85; /* Neon Pink */
+            --accent-2: #8a2be2; /* Deep Purple */
+            --accent-3: #4facfe; /* Cyan */
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --font-sans: 'Outfit', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+            --transition-smooth: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none; /* Hide default cursor for custom one */
+        }
+
+        html, body {
+            width: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-2); }
+
+        /* ==========================================
+           CUSTOM CURSOR
+           ========================================== */
+        .cursor-dot, .cursor-outline {
+            position: fixed;
+            top: 0; left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        .cursor-dot {
+            width: 8px; height: 8px;
+            background-color: var(--accent-1);
+            box-shadow: 0 0 10px var(--accent-1);
+        }
+        .cursor-outline {
+            width: 40px; height: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            * { cursor: auto; }
+            .cursor-dot, .cursor-outline { display: none; }
+        }
+
+        /* ==========================================
+           BACKGROUND CANVAS (PARTICLES)
+           ========================================== */
+        #particle-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* Ambient Glowing Orbs */
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            animation: floatOrb 20s infinite alternate;
+        }
+        .orb-1 {
+            width: 400px; height: 400px;
+            background: rgba(138, 43, 226, 0.15);
+            top: -10%; left: -10%;
+        }
+        .orb-2 {
+            width: 500px; height: 500px;
+            background: rgba(255, 42, 133, 0.1);
+            bottom: -20%; right: -10%;
+            animation-delay: -5s;
+        }
+
+        @keyframes floatOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.2); }
+        }
+
+        /* ==========================================
+           PRELOADER
+           ========================================== */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-color);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 1s ease-out;
+        }
+        .loader-text {
+            font-size: 1.2rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            animation: pulseText 1.5s infinite;
+        }
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* ==========================================
+           LAYOUT & SECTIONS
+           ========================================== */
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 800;
+            line-height: 1.1;
+            text-align: center;
+            background: linear-gradient(45deg, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        .serif-italic {
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-weight: 400;
+            background: linear-gradient(to right, var(--accent-1), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-muted);
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            opacity: 0.5;
+            animation: bounce 2s infinite;
+        }
+        .scroll-indicator span {
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .scroll-line {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--text-main), transparent);
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+
+        /* ==========================================
+           GLASSMORPHIC TIMELINE / CARDS
+           ========================================== */
+        .journey-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15vh;
+            width: 100%;
+            max-width: 1000px;
+            padding: 10vh 0;
+        }
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 24px;
+            padding: 3rem;
+            width: 80%;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
+            transform: skewX(-20deg);
+            transition: 0.7s;
+        }
+        .glass-card:hover::before {
+            left: 150%;
+        }
+        .glass-card.left { align-self: flex-start; }
+        .glass-card.right { align-self: flex-end; }
+        
+        .glass-card h2 {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        .glass-card p {
+            text-align: left;
+            margin: 0;
+        }
+
+        /* ==========================================
+           THE LETTER SECTION
+           ========================================== */
+        .letter-wrapper {
+            background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(0,0,0,0.5));
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
+            padding: 4rem 3rem;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 0 80px rgba(138, 43, 226, 0.1);
+            position: relative;
+        }
+        .letter-wrapper::after {
+            content: '"';
+            position: absolute;
+            top: -20px; left: 40px;
+            font-family: var(--font-serif);
+            font-size: 8rem;
+            color: rgba(255, 42, 133, 0.2);
+            line-height: 1;
+        }
+        .letter-text {
+            font-family: var(--font-serif);
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            color: #e0e0e0;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+        .signature {
+            font-family: var(--font-sans);
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: var(--accent-1);
+            letter-spacing: 2px;
+        }
+
+        /* ==========================================
+           INTERACTIVE WISH BUTTON
+           ========================================== */
+        .wish-section {
+            text-align: center;
+        }
+        .wish-btn {
+            background: transparent;
+            border: none;
+            position: relative;
+            padding: 20px 50px;
+            font-family: var(--font-sans);
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fff;
+            border-radius: 50px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .wish-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, var(--accent-1), var(--accent-2), var(--accent-3));
+            background-size: 200% 200%;
+            animation: gradientMove 3s ease infinite;
+            border-radius: 50px;
+            z-index: -1;
+        }
+        .wish-btn::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: var(--bg-color);
+            border-radius: 50px;
+            z-index: -1;
+            transition: opacity 0.3s ease;
+        }
+        .wish-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 42, 133, 0.4);
+        }
+        .wish-btn:hover::after {
+            opacity: 0.8; /* Let the gradient shine through */
+        }
+        
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #final-message {
+            margin-top: 3rem;
+            font-size: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: var(--transition-smooth);
+            font-family: var(--font-serif);
+            font-style: italic;
+        }
+        #final-message.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ==========================================
+           SCROLL REVEAL ANIMATIONS
+           ========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: var(--transition-smooth);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .glass-card { width: 100%; padding: 2rem; }
+            .letter-wrapper { padding: 3rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Background Elements -->
+    <canvas id="particle-canvas"></canvas>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <!-- Preloader -->
+    <div id="loader">
+        <div class="loader-text">Loading Memories...</div>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section id="hero">
+        <h1 class="reveal">Happy Birthday,<br><span class="serif-italic">[Name]</span></h1>
+        <p class="reveal" style="transition-delay: 0.2s;">Welcome to your digital celebration. Scroll down to begin the journey.</p>
+        
+        <div class="scroll-indicator">
+            <span>Scroll</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- THE JOURNEY / MEMORIES -->
+    <section id="journey">
+        <div class="journey-container">
+            
+            <div class="glass-card left reveal">
+                <h2>The Beginning</h2>
+                <p>There are 8 billion people in the world, living millions of different lives. Yet, out of all the chaotic probabilities of the universe, our paths crossed. And that is my favorite miracle.</p>
+            </div>
+
+            <div class="glass-card right reveal">
+                <h2>The Memories</h2>
+                <p>Every laugh we've shared, every late-night conversation, every quiet moment where no words were needed... They are painted in my mind as the best days of my life.</p>
+            </div>
+
+            <div class="glass-card left reveal">
+                <h2>The Impact</h2>
+                <p>You have this incredibly rare, beautiful energy that just lights up the dark spaces. You make me want to be better, to dream bigger, to love harder.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- THE HEARTFELT LETTER -->
+    <section id="letter">
+        <div class="letter-wrapper reveal">
+            <p class="letter-text">
+                "On this special day, I just wanted to remind you how deeply and truly appreciated you are. You are more than just a person to me; you are a feeling of home, a spark of endless joy. As you step into this new year of your life, I hope you get everything your beautiful heart desires. Keep shining, keep being your authentic self, because the world is so much better with you in it."
+            </p>
+            <p class="signature">— Yours, always.</p>
+        </div>
+    </section>
+
+    <!-- THE INTERACTIVE CLIMAX -->
+    <section class="wish-section reveal">
+        <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">Close your eyes...</h2>
+        <button class="wish-btn" id="wishBtn">Make a Wish</button>
+        <div id="final-message">
+            <span class="serif-italic" style="color: var(--accent-1);">I love you.</span> Happy Birthday!
+        </div>
+    </section>
+
+    <script>
+        /* ==========================================
+           1. LOADER REMOVAL
+           ========================================== */
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    // Trigger initial reveals
+                    revealOnScroll();
+                }, 1000);
+            }, 2000); // 2 second fake loading for anticipation
+        });
+
+        /* ==========================================
+           2. CUSTOM CURSOR
+           ========================================== */
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+
+        window.addEventListener('mousemove', (e) => {
+            const posX = e.clientX;
+            const posY = e.clientY;
+
+            cursorDot.style.left = `${posX}px`;
+            cursorDot.style.top = `${posY}px`;
+
+            // Adding a slight delay to the outline for a fluid feel
+            cursorOutline.animate({
+                left: `${posX}px`,
+                top: `${posY}px`
+            }, { duration: 500, fill: "forwards" });
+        });
+
+        // Add hover effects for interactive elements
+        const interactives = document.querySelectorAll('button, .glass-card');
+        interactives.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorOutline.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                cursorOutline.style.backgroundColor = 'rgba(255, 42, 133, 0.1)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorOutline.style.transform = 'translate(-50%, -50%) scale(1)';
+                cursorOutline.style.backgroundColor = 'transparent';
+            });
+        });
+
+        /* ==========================================
+           3. SCROLL REVEAL ANIMATION
+           ========================================== */
+        function revealOnScroll() {
+            const reveals = document.querySelectorAll('.reveal');
+            const windowHeight = window.innerHeight;
+            const elementVisible = 150;
+
+            reveals.forEach(reveal => {
+                const elementTop = reveal.getBoundingClientRect().top;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveal.classList.add('active');
+                }
+            });
+        }
+        window.addEventListener('scroll', revealOnScroll);
+
+        /* ==========================================
+           4. BACKGROUND PARTICLE SYSTEM (STARS)
+           ========================================== */
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particlesArray = [];
+        let mouse = { x: null, y: null, radius: 150 };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        class Particle {
+            constructor(x, y, size, speedX, speedY) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.speedX = speedX;
+                this.speedY = speedY;
+                this.baseSize = size;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fill();
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Wrap around edges
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+
+                // Mouse interaction (repel slightly and glow)
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < mouse.radius) {
+                    this.size = this.baseSize * 2.5;
+                } else {
+                    this.size = this.baseSize;
+                }
+
+                this.draw();
+            }
+        }
+
+        function initParticles() {
+            particlesArray = [];
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            let numberOfParticles = (canvas.width * canvas.height) / 9000;
+            
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 1.5) + 0.5;
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                let speedX = (Math.random() * 0.5) - 0.25;
+                let speedY = (Math.random() * 0.5) - 0.25;
+                particlesArray.push(new Particle(x, y, size, speedX, speedY));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', () => {
+            initParticles();
+        });
+
+        initParticles();
+        animateParticles();
+
+        /* ==========================================
+           5. INTERACTIVE WISH (CONFETTI CLIMAX)
+           ========================================== */
+        const wishBtn = document.getElementById('wishBtn');
+        const finalMessage = document.getElementById('final-message');
+
+        wishBtn.addEventListener('click', () => {
+            // Hide button, show text
+            wishBtn.style.display = 'none';
+            finalMessage.classList.add('visible');
+
+            // 2026-Style Multi-burst Confetti
+            const duration = 3 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10000 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                const particleCount = 50 * (timeLeft / duration);
+                
+                // Fire from multiple origins
+                confetti(Object.assign({}, defaults, { 
+                    particleCount, 
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                    colors: ['#ff2a85', '#8a2be2', '#ffffff']
+                }));
+                confetti(Object.assign({}, defaults, { 
+                    particleCount, 
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                    colors: ['#4facfe', '#ffffff', '#ff2a85']
+                }));
+            }, 250);
+        });
+
+    </script>
+</body>
+</html>
